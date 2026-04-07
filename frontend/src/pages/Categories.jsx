@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, X, Edit2, Trash2, ArrowLeft, ChevronRight, Check } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
@@ -13,7 +13,11 @@ const Categories = () => {
   const [sizeType, setSizeType] = useState('Standard');
 
   const fetchCat = async () => {
-    const { data } = await supabase.from('categories').select('*').order('created_at');
+    const { data, error } = await supabase.from('categories').select('*').order('created_at');
+    if (error) {
+      console.error('Fetch Error:', error);
+      alert('Error fetching categories: ' + error.message);
+    }
     setCategories(data || []);
   };
 
@@ -60,19 +64,33 @@ const Categories = () => {
     if (isDuplicate) { alert('This category already exists!'); return; }
 
     const payload = { name: trimmedName, parent_id: parentId || null, sizes: JSON.stringify(sizes), size_type: sizeType, styles: '[]' };
+    
+    let response;
     if (editingId) {
-      await supabase.from('categories').update(payload).eq('id', editingId);
+      response = await supabase.from('categories').update(payload).eq('id', editingId);
     } else {
-      await supabase.from('categories').insert(payload);
+      response = await supabase.from('categories').insert(payload);
     }
-    fetchCat(); closeEditor();
+
+    if (response.error) {
+      console.error('Save Error:', response.error);
+      alert('Save failed: ' + response.error.message);
+    } else {
+      fetchCat(); 
+      closeEditor();
+    }
   };
 
   const handleDelete = async (e, id) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this category?')) {
-      await supabase.from('categories').delete().eq('id', id);
-      fetchCat();
+      const { error } = await supabase.from('categories').delete().eq('id', id);
+      if (error) {
+        console.error('Delete Error:', error);
+        alert('Delete failed: ' + error.message);
+      } else {
+        fetchCat();
+      }
     }
   };
 
