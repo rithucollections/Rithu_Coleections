@@ -187,6 +187,36 @@ const Categories = () => {
           </div>
         ))}
       </div>
+      <div className="mt-20 p-8 rounded-3xl bg-white/[0.03] border border-white/10 shadow-2xl backdrop-blur-md">
+        <div className="flex items-center justify-between mb-6">
+          <h4 className="text-xs font-black uppercase tracking-widest text-gold/60">Connection Diagnostics</h4>
+          <span className="px-3 py-1 rounded-full bg-gold/10 text-gold text-[9px] font-black uppercase tracking-tighter border border-gold/20">Alpha Tool</span>
+        </div>
+        <div className="space-y-4 mb-8">
+          <div className="p-4 rounded-xl bg-black/40 border border-white/5">
+            <p className="text-[10px] text-white/40 mb-1 uppercase tracking-widest font-black">Endpoint</p>
+            <code className="text-[10px] text-gold/80 block break-all">{import.meta.env.VITE_SUPABASE_URL}</code>
+          </div>
+        </div>
+        <button 
+          onClick={async () => {
+            try {
+              const start = Date.now();
+              const res = await fetch(import.meta.env.VITE_SUPABASE_URL + '/rest/v1/', {
+                headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY }
+              });
+              const end = Date.now();
+              if (res.ok) alert(`✅ CONNECTION SECURE!\n- Response: ${res.status}\n- Latency: ${end - start}ms\n\nYour project is online and reachable!`);
+              else alert(`❌ CONNECTION BLOCKED\n- Status: ${res.status}\n- Msg: ${res.statusText}\n\nThis is usually an RLS or Auth issue.`);
+            } catch (e) {
+              alert(`🚨 NETWORK FAILURE\n- Reason: ${e.message}\n\nThis means your browser cannot reach the Supabase domain. Check if the project is PAUSED in the Supabase Dashboard.`);
+            }
+          }}
+          className="btn btn-secondary w-full text-xs font-black p-4 py-4"
+        >
+          RUN NETWORK DIAGNOSIS
+        </button>
+      </div>
     </div>
   );
 };
