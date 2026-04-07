@@ -186,11 +186,13 @@ const Categories = () => {
             </div>
           </div>
         ))}
-        {categories.length === 0 && (
-          <div className="card text-center py-20 border-dashed">
-            <div className="text-white/20 text-sm italic">Define your first category to start organizing...</div>
-          </div>
-        )}
+      </div>
+      <div className="mt-20 p-6 rounded-2xl bg-white/[0.02] border border-white/5 opacity-20 hover:opacity-100 transition-opacity">
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-4">Connection Debugger</h4>
+        <div className="space-y-2">
+          <p className="text-[10px] text-white/30">Target: <span className="text-gold">{import.meta.env.VITE_SUPABASE_URL}</span></p>
+          <p className="text-[10px] text-white/30 truncate">Key Prefix: <span className="text-white/60">{import.meta.env.VITE_SUPABASE_ANON_KEY?.substring(0, 10)}...</span></p>
+        </div>
       </div>
     </div>
   );
