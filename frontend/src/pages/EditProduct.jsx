@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowLeft, Check, Trash2, Plus, Upload, Link, AlertTriangle, Zap, RefreshCw, Layers, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { API_URL } from '../config';
+import { supabase } from '../supabaseClient';
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -32,32 +32,21 @@ const EditProduct = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [catRes, prodRes] = await Promise.all([
-          fetch(`${API_URL}/category`),
-          fetch(`${API_URL}/product/${id}`)
+        const [{ data: cats }, { data: prod }] = await Promise.all([
+          supabase.from('categories').select('*').order('name'),
+          supabase.from('products').select('*').eq('id', id).single()
         ]);
-        
-        const cats = await catRes.json();
-        const prod = await prodRes.json();
-        
-        setCategories(cats);
-        setFormData({
-          name: prod.name,
-          category_id: String(prod.category_id),
-          images: prod.images || [],
-          selectedSizes: prod.sizes || [],
-          selectedColors: prod.colors || [],
-          variants: prod.variants || [],
-          mrp: prod.mrp,
-          offer_price: prod.offer_price
-        });
-        
-        setInitialConfig({
-          sizes: prod.sizes || []
-        });
-
-        const cat = cats.find(c => c.id === Number(prod.category_id));
-        setActiveCategory(cat || null);
+        const parsedCats = (cats || []).map(c => ({ ...c, sizes: c.sizes ? JSON.parse(c.sizes) : [] }));
+        setCategories(parsedCats);
+        if (prod) {
+          const parsedImages = prod.images ? JSON.parse(prod.images) : [];
+          const parsedSizes = prod.sizes ? JSON.parse(prod.sizes) : [];
+          const parsedVariants = prod.variants ? JSON.parse(prod.variants) : [];
+          setFormData({ name: prod.name, category_id: String(prod.category_id), images: parsedImages, selectedSizes: parsedSizes, variants: parsedVariants, mrp: prod.mrp, offer_price: prod.offer_price });
+          setInitialConfig({ sizes: parsedSizes });
+          const cat = parsedCats.find(c => c.id === Number(prod.category_id));
+          setActiveCategory(cat || null);
+        }
         setLoading(false);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -130,41 +119,29 @@ const EditProduct = () => {
 
   const handleSubmit = async () => {
     const totalStock = formData.variants.reduce((acc, curr) => acc + (Number(curr.stock) || 0), 0);
-    try {
-      const res = await fetch(`${API_URL}/product/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          category_id: Number(formData.category_id),
-          stock: totalStock,
-          mrp: Number(formData.mrp),
-          offer_price: Number(formData.offer_price) || 0
-        })
-      });
-      if (res.ok) {
-        alert('Product successfully updated in the master registry.');
-        navigate('/admin/products');
-      } else {
-        alert('Update failed. Please check your data and try again.');
-      }
-    } catch (err) {
-      console.error('Update failed:', err);
-      alert('A critical error occurred during the update process.');
-    }
+    const { error } = await supabase.from('products').update({
+      name: formData.name,
+      category_id: Number(formData.category_id),
+      mrp: Number(formData.mrp),
+      offer_price: Number(formData.offer_price) || 0,
+      stock: totalStock,
+      images: JSON.stringify(formData.images),
+      sizes: JSON.stringify(formData.selectedSizes),
+      variants: JSON.stringify(formData.variants.map(v => ({ ...v, stock: Number(v.stock) || 0 })))
+    }).eq('id', id);
+    if (!error) { alert('Product successfully updated!'); navigate('/admin/products'); }
+    else { alert('Update failed: ' + error.message); }
   };
 
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (formData.images.length + files.length > 5) return alert('Max 5 images');
-    
     for (const file of files) {
-      const data = new FormData();
-      data.append('image', file);
-      const resp = await fetch(`${API_URL}/upload`, { method: 'POST', body: data });
-      const result = await resp.json();
-      if (result.url) {
-        setFormData(prev => ({ ...prev, images: [...prev.images, `${API_URL}${result.url}`] }));
+      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${file.name.split('.').pop()}`;
+      const { error } = await supabase.storage.from('product-images').upload(fileName, file, { cacheControl: '3600', upsert: false });
+      if (!error) {
+        const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
+        setFormData(prev => ({ ...prev, images: [...prev.images, urlData.publicUrl] }));
       }
     }
   };
