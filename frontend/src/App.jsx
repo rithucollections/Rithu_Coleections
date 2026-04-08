@@ -48,10 +48,10 @@ const AdminBottomNav = () => {
 
 const UserBottomNav = () => {
   const location = useLocation();
-  const { cart } = useCart();
+  const { cart, wishlist } = useCart();
   const isActive = (path) => location.pathname === path;
 
-  const NavItem = ({ to, icon: Icon, label, cartCount }) => {
+  const NavItem = ({ to, icon: Icon, label, cartCount, wishlistCount }) => {
     const active = isActive(to);
     const color = active ? 'var(--primary-gold)' : 'rgba(255,255,255,0.4)';
 
@@ -59,15 +59,8 @@ const UserBottomNav = () => {
       <Link to={to} className="user-nav-item" style={{ color: color, textDecoration: 'none', gap: '6px' }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={24} strokeWidth={active ? 2 : 1.5} />
-          {cartCount > 0 && (
-            <span style={{
-              position: 'absolute', top: -5, right: -10, 
-              background: 'var(--primary-gold)', color: '#000', 
-              fontSize: '9px', height: '16px', width: '16px', 
-              borderRadius: '50%', display: 'flex', alignItems: 'center', 
-              justifyContent: 'center', fontWeight: '900'
-            }}>{cartCount}</span>
-          )}
+          {cartCount > 0 && <span className="bag-badge">{cartCount}</span>}
+          {wishlistCount > 0 && <span className="bag-badge" style={{ background: '#ff3b3b', color: '#fff' }}>{wishlistCount}</span>}
         </div>
         <span style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</span>
       </Link>
@@ -84,7 +77,7 @@ const UserBottomNav = () => {
     }}>
       <NavItem to="/" icon={Search} label="Explore" />
       <NavItem to="/cart" icon={ShoppingBag} label="Bag" cartCount={cart.length} />
-      <NavItem to="/profile" icon={User} label="Connect" />
+      <NavItem to="/profile" icon={User} label="Connect" wishlistCount={wishlist.length} />
     </div>
   );
 };

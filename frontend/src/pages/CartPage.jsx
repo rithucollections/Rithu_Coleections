@@ -47,11 +47,50 @@ const CartPage = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="container flex flex-col items-center justify-center p-10 text-center bg-black" style={{minHeight: '80vh'}}>
-        <div className="mb-8 opacity-20"><ShoppingBag size={100} strokeWidth={1} /></div>
-        <h2 className="heading-luxury text-2xl text-white mb-4">Your Bag is Empty</h2>
-        <p className="text-secondary text-sm mb-10 max-w-[200px] leading-relaxed">Discover our latest collections and find your perfect fit.</p>
-        <button className="btn-premium px-12" onClick={() => navigate('/')}>Explore Collections</button>
+      <div className="animate-fade-in" style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'flex-end', 
+        textAlign: 'center', 
+        backgroundColor: '#000', 
+        minHeight: '85vh', 
+        paddingLeft: '24px', 
+        paddingRight: '24px', 
+        paddingBottom: '100px',
+        width: '100%',
+        overflowX: 'hidden'
+      }}>
+        <div className="animate-float animate-glow-gold" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '60px' }}>
+          <ShoppingBag size={100} strokeWidth={0.5} className="text-gold" />
+        </div>
+        
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <h2 className="heading-luxury" style={{ fontSize: '32px', color: '#fff', marginBottom: '12px', fontWeight: '500', width: '100%', textAlign: 'center' }}>Your Bag is Empty</h2>
+          
+          <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '48px', maxWidth: '260px', lineHeight: '1.6', textAlign: 'center', margin: '0 auto 48px' }}>
+            Discover curated styles tailored just for you
+          </p>
+
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginBottom: '64px' }}>
+            <button 
+              className="btn-premium" 
+              onClick={() => navigate('/')}
+              style={{ width: '85%', maxWidth: '320px', padding: '20px', fontSize: '14px' }}
+            >
+              Explore Collections
+            </button>
+          </div>
+
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '3px', color: 'rgba(255,255,255,0.2)', marginBottom: '24px', fontWeight: '900', textAlign: 'center' }}>Trending Now</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px' }}>
+              <span className="glass-chip" onClick={() => navigate('/')}>Shirts</span>
+              <span className="glass-chip" onClick={() => navigate('/')}>Pants</span>
+              <span className="glass-chip" onClick={() => navigate('/')}>New Arrivals</span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -103,8 +142,11 @@ const CartPage = () => {
         </div>
       </div>
       <div className="sticky-footer-v2">
+        <p style={{ textAlign: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '12px', letterSpacing: '0.5px' }}>
+          You will be redirected to WhatsApp to complete your purchase.
+        </p>
         <button className="btn-premium w-full shadow-2xl shadow-gold/20 flex items-center justify-center gap-3" onClick={handleCheckout} disabled={loading}>
-          {loading ? <><RefreshCw size={20} className="animate-spin" /> SECURING ORDER...</> : <>CONTINUE TO WHATSAPP</>}
+          {loading ? <><RefreshCw size={20} className="animate-spin" /> SECURING ORDER...</> : <>BUY NOW → WhatsApp Checkout</>}
         </button>
       </div>
     </div>

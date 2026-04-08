@@ -70,8 +70,22 @@ body {
   100% { transform: scale(1.1); }
 }
 
+@keyframes float {
+  0% { transform: translateY(0px) scale(1.2); }
+  50% { transform: translateY(-10px) scale(1.2); }
+  100% { transform: translateY(0px) scale(1.2); }
+}
+
+@keyframes glowGoldPulse {
+  0% { filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.3)); opacity: 0.8; }
+  50% { filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.6)); opacity: 1; }
+  100% { filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.3)); opacity: 0.8; }
+}
+
 .animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
 .animate-fade-in { animation: fadeIn 0.4s ease; }
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-glow-gold { animation: glowGoldPulse 3s ease-in-out infinite; }
 
 /* Premium Typography */
 .text-gold { color: var(--primary-gold); }
@@ -99,7 +113,7 @@ body {
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: var(--shadow-gold);
+  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
 }
 
 .btn-premium:active { transform: scale(0.95); }
@@ -487,6 +501,26 @@ body {
 .badge-confirmed { background: rgba(0, 210, 106, 0.1); color: var(--success); }
 .badge-delivered { background: rgba(255, 255, 255, 0.1); color: var(--text-white); }
 
+.glass-chip {
+  padding: 10px 18px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.glass-chip:active {
+  background: var(--gold-gradient);
+  color: #000;
+  border-color: transparent;
+  transform: scale(0.95);
+}
+
 /* Floating Action Button (Admin) */
 .fab {
   position: fixed;
@@ -600,5 +634,66 @@ body {
 
 .bottom-nav-item.active {
   color: var(--primary-gold);
+}
+
+/* Fly to Bag Animations */
+.bag-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: var(--gold-gradient);
+  color: #000;
+  font-size: 9px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 50%;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(1);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+
+.bag-badge.bump {
+  transform: scale(1.4);
+}
+
+.bag-bounce {
+  animation: bagBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bagBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.bag-glow {
+  filter: drop-shadow(0 0 12px var(--primary-gold)) brightness(1.2);
+}
+
+.flying-item {
+  position: fixed;
+  z-index: 99999;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  pointer-events: none;
+  transition: all 0.7s cubic-bezier(.4,0,.2,1);
+}
+
+.heart-pop {
+  animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  color: #ff3b3b !important;
+}
+
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
 }
 

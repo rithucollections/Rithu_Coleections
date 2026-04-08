@@ -7,7 +7,6 @@ import { supabase } from '../supabaseClient';
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +14,7 @@ const ProductDetail = () => {
   const [activeImg, setActiveImg] = useState(0);
   const [error, setError] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const { cart, addToCart, toggleWishlist, isInWishlist } = useCart();
 
   useEffect(() => {
     const loadData = async () => {
@@ -33,11 +33,61 @@ const ProductDetail = () => {
     loadData();
   }, [id]);
 
+  const animateToCart = (imgElement, cartIcon) => {
+    if (!imgElement || !cartIcon) return;
+    const imgRect = imgElement.getBoundingClientRect();
+    const cartRect = cartIcon.getBoundingClientRect();
+
+    const clone = imgElement.cloneNode(true);
+    clone.classList.add('flying-item');
+    clone.style.left = imgRect.left + "px";
+    clone.style.top = imgRect.top + "px";
+    clone.style.width = imgRect.width + "px";
+    clone.style.height = imgRect.height + "px";
+
+    document.body.appendChild(clone);
+
+    requestAnimationFrame(() => {
+      clone.style.left = cartRect.left + (cartRect.width / 2) - 15 + "px";
+      clone.style.top = cartRect.top + (cartRect.height / 2) - 15 + "px";
+      clone.style.width = "30px";
+      clone.style.height = "30px";
+      clone.style.opacity = "0.4";
+      clone.style.borderRadius = "50%";
+    });
+
+    setTimeout(() => {
+      clone.remove();
+      // Trigger bag animations after fly completes
+      cartIcon.classList.add("bag-bounce", "bag-glow");
+      const badge = cartIcon.querySelector(".bag-badge");
+      if (badge) badge.classList.add("bump");
+      
+      setTimeout(() => {
+        cartIcon.classList.remove("bag-bounce", "bag-glow");
+        if (badge) badge.classList.remove("bump");
+      }, 400);
+    }, 700);
+  };
+
   const handleAddToCart = () => {
     if (product.sizes?.length > 0 && !selectedSize) { setError('Please select a size'); return; }
+    
+    // Animation trigger
+    const img = document.getElementById("product-image");
+    const cartIcon = document.getElementById("cart-icon");
+    animateToCart(img, cartIcon);
+
     addToCart(product, { size: selectedSize }, 1);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
+  };
+
+  const handleToggleLike = (e) => {
+    const btn = e.currentTarget;
+    btn.classList.add('heart-pop');
+    toggleWishlist(product);
+    setTimeout(() => btn.classList.remove('heart-pop'), 400);
   };
 
   if (loading) return <div className="detail-layout flex items-center justify-center text-gold">Loading...</div>;
@@ -52,12 +102,24 @@ const ProductDetail = () => {
           <ArrowLeft size={20} />
         </button>
         <div style={{ display: 'flex', gap: '12px', pointerEvents: 'auto' }}>
-          <button style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Heart size={20} /></button>
-          <button style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => navigate('/cart')}><ShoppingBag size={20} /></button>
+          <button 
+            onClick={handleToggleLike}
+            style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', color: isInWishlist(product.id) ? '#ff3b3b' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s' }}
+          >
+            <Heart size={20} fill={isInWishlist(product.id) ? "#ff3b3b" : "none"} />
+          </button>
+          <button 
+            id="cart-icon"
+            style={{ position: 'relative', width: '44px', height: '44px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s' }} 
+            onClick={() => navigate('/cart')}
+          >
+            <ShoppingBag size={20} />
+            {cart.length > 0 && <span className="bag-badge">{cart.length}</span>}
+          </button>
         </div>
       </div>
       <div style={{ width: '100%', height: '75vh', position: 'relative', overflow: 'hidden' }}>
-        <img src={product.images?.[activeImg]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="animate-fade-in" />
+        <img id="product-image" src={product.images?.[activeImg]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="animate-fade-in" />
         <div style={{ position: 'absolute', bottom: '80px', left: '24px' }}>
           <div style={{ padding: '6px 12px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <span style={{ fontSize: '12px', fontWeight: '900', color: '#000' }}>4.2</span>

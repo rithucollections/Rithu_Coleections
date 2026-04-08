@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Heart, Star } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { useCart } from '../context/CartContext';
 
 const UserHome = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCat, setSelectedCat] = useState(null);
   const navigate = useNavigate();
+  const { cart, wishlist, toggleWishlist, isInWishlist } = useCart();
 
   useEffect(() => {
     const loadData = async () => {
@@ -36,8 +38,14 @@ const UserHome = () => {
         <h1 className="heading-luxury" style={{ fontSize: '18px', letterSpacing: '0.3em', textAlign: 'center', margin: 0, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>RITHU COLLECTIONS</h1>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: '20px', color: 'rgba(255,255,255,0.8)' }}>
           <Search size={20} strokeWidth={1.5} />
-          <Heart size={20} strokeWidth={1.5} />
-          <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => navigate('/cart')}><ShoppingBag size={20} strokeWidth={1.5} /></div>
+          <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => navigate('/profile')}>
+            <Heart size={20} strokeWidth={1.5} fill={wishlist.length > 0 ? "var(--primary-gold)" : "none"} />
+            {wishlist.length > 0 && <span className="bag-badge" style={{ background: '#ff3b3b', color: '#fff' }}>{wishlist.length}</span>}
+          </div>
+          <div id="cart-icon-home" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => navigate('/cart')}>
+            <ShoppingBag size={20} strokeWidth={1.5} />
+            {cart.length > 0 && <span className="bag-badge">{cart.length}</span>}
+          </div>
         </div>
       </div>
 
@@ -103,8 +111,17 @@ const UserHome = () => {
                   </div>
                 </div>
               </div>
-              <div style={{ position: 'absolute', top: '16px', right: '16px', width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                <Heart size={18} />
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const btn = e.currentTarget;
+                  btn.classList.add('heart-pop');
+                  toggleWishlist(product);
+                  setTimeout(() => btn.classList.remove('heart-pop'), 400);
+                }}
+                style={{ position: 'absolute', top: '16px', right: '16px', width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isInWishlist(product.id) ? '#ff3b3b' : '#fff', transition: 'all 0.3s' }}
+              >
+                <Heart size={18} fill={isInWishlist(product.id) ? "#ff3b3b" : "none"} />
               </div>
             </div>
           </div>
