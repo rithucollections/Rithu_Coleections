@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingBag, Heart, Star } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Search, ShoppingBag, Heart, Star, X, ArrowLeft } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useCart } from '../context/CartContext';
 
 const UserHome = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedCat, setSelectedCat] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [selectedCat, setSelectedCat] = useState(location.state?.categoryId || null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { cart, wishlist, toggleWishlist, isInWishlist } = useCart();
 
   useEffect(() => {
@@ -27,26 +30,129 @@ const UserHome = () => {
     loadData();
   }, []);
 
-  const filteredProducts = selectedCat ? products.filter(p => p.category_id === selectedCat) : products;
+  useEffect(() => {
+    if (location.state?.categoryId) {
+      setSelectedCat(location.state.categoryId);
+    }
+  }, [location.state]);
+
+  const fuzzyMatch = (str, query) => {
+    if (!query) return true;
+    const s = str.toLowerCase();
+    const q = query.toLowerCase().trim();
+    
+    // 1. Partial match (common case)
+    if (s.includes(q)) return true;
+    
+    // 2. Word-based match
+    const strWords = s.split(/\s+/);
+    const queryWords = q.split(/\s+/);
+    
+    // If any word in query matches starting of any word in string
+    if (queryWords.every(qw => strWords.some(sw => sw.startsWith(qw)))) return true;
+
+    // 3. For spelling mistakes (character sequence with 80% threshold)
+    if (q.length < 3) return false;
+    
+    let matches = 0;
+    let j = 0;
+    for (let i = 0; i < s.length && j < q.length; i++) {
+      if (s[i] === q[j]) {
+        matches++;
+        j++;
+      }
+    }
+    return matches / q.length >= 0.8;
+  };
+
+  const filteredProducts = products.filter(p => {
+    const matchesCat = !selectedCat || p.category_id === selectedCat;
+    const matchesSearch = fuzzyMatch(p.name, searchQuery);
+    return matchesCat && matchesSearch;
+  });
+
   const getCategoryName = (id) => categories.find(c => c.id === id)?.name || 'Product';
 
   return (
     <div className="user-home pb-32 animate-fade-in" style={{ backgroundColor: '#000', minHeight: '100vh' }}>
       {/* Header */}
-      <div style={{ position: 'sticky', top: 0, left: 0, right: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '20px 24px', display: 'flex', alignItems: 'center' }}>
-        <div style={{ flex: 1 }}></div>
-        <h1 className="heading-luxury" style={{ fontSize: '18px', letterSpacing: '0.3em', textAlign: 'center', margin: 0, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>RITHU COLLECTIONS</h1>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: '20px', color: 'rgba(255,255,255,0.8)' }}>
-          <Search size={20} strokeWidth={1.5} />
-          <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => navigate('/profile')}>
-            <Heart size={20} strokeWidth={1.5} fill={wishlist.length > 0 ? "var(--primary-gold)" : "none"} />
-            {wishlist.length > 0 && <span className="bag-badge" style={{ background: '#ff3b3b', color: '#fff' }}>{wishlist.length}</span>}
+      <div style={{ 
+        position: 'sticky', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        zIndex: 1000, 
+        backgroundColor: 'rgba(0,0,0,0.8)', 
+        backdropFilter: 'blur(20px)', 
+        borderBottom: '1px solid rgba(255,255,255,0.05)', 
+        padding: '16px 24px', 
+        height: '72px',
+        display: 'flex', 
+        alignItems: 'center',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+      }}>
+        {!isSearchOpen ? (
+          <>
+            <div style={{ flex: 1 }}></div>
+            <h1 className="heading-luxury" style={{ 
+              fontSize: '18px', 
+              letterSpacing: '0.3em', 
+              textAlign: 'center', 
+              margin: 0, 
+              background: 'var(--gold-gradient)', 
+              WebkitBackgroundClip: 'text', 
+              WebkitTextFillColor: 'transparent',
+              whiteSpace: 'nowrap'
+            }}>RITHU COLLECTIONS</h1>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: '20px', alignItems: 'center', color: 'rgba(255,255,255,0.8)' }}>
+              <div onClick={() => setIsSearchOpen(true)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                <Search size={22} strokeWidth={1.5} />
+              </div>
+              <div style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => navigate('/profile')}>
+                <Heart size={21} strokeWidth={1.5} fill={wishlist.length > 0 ? "var(--primary-gold)" : "none"} />
+                {wishlist.length > 0 && <span className="bag-badge" style={{ background: '#ff3b3b', color: '#fff', top: '-6px', right: '-6px' }}>{wishlist.length}</span>}
+              </div>
+              <div id="cart-icon-home" style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => navigate('/cart')}>
+                <ShoppingBag size={21} strokeWidth={1.5} />
+                {cart.length > 0 && <span className="bag-badge" style={{ top: '-6px', right: '-6px' }}>{cart.length}</span>}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="animate-fade-in" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }} style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.6)' }}>
+              <ArrowLeft size={22} />
+            </div>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <input 
+                autoFocus
+                type="text" 
+                placeholder="Search premium collections..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ 
+                  width: '100%', 
+                  backgroundColor: 'rgba(255,255,255,0.08)', 
+                  border: '1px solid rgba(255,255,255,0.15)', 
+                  borderRadius: '16px', 
+                  padding: '12px 16px 12px 42px', 
+                  fontSize: '14px', 
+                  color: '#fff', 
+                  outline: 'none',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+                }}
+              />
+              <Search size={16} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary-gold)' }} />
+              {searchQuery && (
+                <X 
+                  size={16} 
+                  onClick={() => setSearchQuery('')}
+                  style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }} 
+                />
+              )}
+            </div>
           </div>
-          <div id="cart-icon-home" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => navigate('/cart')}>
-            <ShoppingBag size={20} strokeWidth={1.5} />
-            {cart.length > 0 && <span className="bag-badge">{cart.length}</span>}
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Hero Banner */}

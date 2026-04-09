@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag, CheckCircle, RefreshCw } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -11,6 +11,17 @@ const CartPage = () => {
   const [loading, setLoading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState(null);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase.from('categories').select('*').limit(5);
+      if (!error && data) {
+        setCategories(data);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
@@ -85,9 +96,16 @@ const CartPage = () => {
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '3px', color: 'rgba(255,255,255,0.2)', marginBottom: '24px', fontWeight: '900', textAlign: 'center' }}>Trending Now</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px' }}>
-              <span className="glass-chip" onClick={() => navigate('/')}>Shirts</span>
-              <span className="glass-chip" onClick={() => navigate('/')}>Pants</span>
-              <span className="glass-chip" onClick={() => navigate('/')}>New Arrivals</span>
+              {categories.map(cat => (
+                <span 
+                  key={cat.id} 
+                  className="glass-chip" 
+                  onClick={() => navigate('/', { state: { categoryId: cat.id } })}
+                >
+                  {cat.name}
+                </span>
+              ))}
+              <span className="glass-chip" onClick={() => navigate('/')}>Explore All</span>
             </div>
           </div>
         </div>
